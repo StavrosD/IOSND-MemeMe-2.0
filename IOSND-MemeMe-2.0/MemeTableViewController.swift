@@ -13,7 +13,7 @@ class MemeTableViewController: UIViewController ,UITableViewDataSource,UITableVi
         let object = UIApplication.shared.delegate
         let appDelegate = object as! AppDelegate
         return appDelegate.memes
-    }
+    } 
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return memes.count
