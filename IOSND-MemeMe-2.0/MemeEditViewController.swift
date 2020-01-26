@@ -10,7 +10,7 @@ import UIKit
 
 
 
-class ViewController: UIViewController,UIImagePickerControllerDelegate ,UINavigationControllerDelegate,UITextFieldDelegate{
+class MemeEditViewController: UIViewController,UIImagePickerControllerDelegate ,UINavigationControllerDelegate,UITextFieldDelegate{
     @IBOutlet weak var cameraButton: UIBarButtonItem!
     @IBOutlet weak var imagePickerView: UIImageView!
     @IBOutlet weak var topTextField: UITextField!
@@ -34,7 +34,6 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate ,UINaviga
         NSAttributedString.Key.strokeWidth: -4.0,  /* TODO: fill in appropriate Float */
         // I had to use negative value.It was tricky
         // https://developer.apple.com/library/archive/qa/qa1531/_index.html
-        
     ]
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,13 +42,28 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate ,UINaviga
         self.navigationController?.isNavigationBarHidden=true
     }
     
+    func topAndBottomBarsAreVissible(_ hide: Bool) {
+        topMenuBar.isHidden = hide
+        bottoMenuBar.isHidden = hide
+    }
+    
+    func configureTextField(textField: UITextField, withText text: String) {
+        textField.defaultTextAttributes=memeTextAttributes
+        textField.textAlignment = NSTextAlignment.center
+        textField.text = text
+    }
+    func presentImagePickerWith(sourceType: UIImagePickerController.SourceType) {
+        let imagePicker = UIImagePickerController()
+               imagePicker.delegate = self //as? UIImagePickerControllerDelegate & UINavigationControllerDelegate
+               imagePicker.sourceType =  sourceType
+               present(imagePicker, animated: true, completion: nil)
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         cameraButton.isEnabled = UIImagePickerController.isSourceTypeAvailable(.camera)
-        topTextField.defaultTextAttributes=memeTextAttributes
-        topTextField.textAlignment=NSTextAlignment.center
+        configureTextField(textField: topTextField, withText: initialText)
+        configureTextField(textField: bottomTextField, withText: initialText)
         
-        bottomTextField.defaultTextAttributes=memeTextAttributes
-        bottomTextField.textAlignment=NSTextAlignment.center
         subscribeToKeyboardNotifications()
     }
     override func viewWillDisappear(_ animated: Bool) {
@@ -65,11 +79,10 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate ,UINaviga
     
     func unsubscribeFromKeyboardNotifications() {
         
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.removeObserver(self,name: UIResponder.keyboardWillHideNotification,object: nil)
+        NotificationCenter.default.removeObserver(self)
     }
-    
-    func getKeyboardHeight(_ notification:Notification) -> CGFloat {
+  
+  func getKeyboardHeight(_ notification:Notification) -> CGFloat {
         
         let userInfo = notification.userInfo
         let keyboardSize = userInfo![UIResponder.keyboardFrameEndUserInfoKey] as! NSValue // of CGRect
@@ -87,15 +100,13 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate ,UINaviga
     }
     
     func generateMemedImage() -> UIImage {
-          topMenuBar.isHidden=true
-          bottoMenuBar.isHidden=true
+        topAndBottomBarsAreVissible(false)
           // Render view to an image
           UIGraphicsBeginImageContext(self.view.frame.size)
           view.drawHierarchy(in: self.view.frame, afterScreenUpdates: true)
           let memedImage:UIImage = UIGraphicsGetImageFromCurrentImageContext()!
           UIGraphicsEndImageContext()
-          topMenuBar.isHidden=false
-          bottoMenuBar.isHidden=false
+        topAndBottomBarsAreVissible(true)
           return memedImage
     }
     
@@ -144,17 +155,11 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate ,UINaviga
     }
     
     @IBAction func pickAnImageFromCamera(_ sender: Any) {
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self //as? UIImagePickerControllerDelegate & UINavigationControllerDelegate
-        imagePicker.sourceType =  .camera
-        present(imagePicker, animated: true, completion: nil)
+        presentImagePickerWith(sourceType: .camera)
     }
     
     @IBAction func pickImageFromAlbum(_ sender: Any) {
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self //as? UIImagePickerControllerDelegate & UINavigationControllerDelegate
-        imagePicker.sourceType =  .photoLibrary
-        present(imagePicker, animated: true, completion: nil)
+        presentImagePickerWith(sourceType: .photoLibrary)
     }
     
     @objc func keyboardWillShow(_ notification:Notification) {
